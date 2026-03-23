@@ -1,0 +1,23 @@
+{
+  "aws": [
+    "iam_root_mfa_enabled",
+    "iam_user_mfa_enabled_console_access",
+    "iam_password_policy_minimum_length_14",
+    "iam_no_root_access_key",
+    "ec2_instance_profile_attached",
+    "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_80",
+    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_443",
+    "ec2_securitygroup_with_port_range_wider_than_80_443",
+    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_22",
+    "ec2_securitygroup_not_used",
+    "rds_instance_public_access",
+    "rds_instance_event_subscription_security_groups",
+    "eks_control_plane_endpoint_access_restricted",
+    "eks_endpoints_not_publicly_accessible",
+    "elbv2_deletion_protection",
+    "s3_bucket_public_access",
+    "ec2_ebs_default_encryption",
+    "vpc_flow_logs_enabled"
+  ]
+}
