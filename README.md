@@ -110,7 +110,7 @@ prowler aws \
   --checks-file ./prowler-scan/config/checklist.yaml \
   --output-directory output \
   --output-modes html json-ocsf \
-  --region us-west-2
+  --region ap-south-1
 ```
 
 
