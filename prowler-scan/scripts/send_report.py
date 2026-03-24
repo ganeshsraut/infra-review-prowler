@@ -235,6 +235,7 @@ def send_email():
     recipient_list = [e.strip() for e in receiver_email_env.split(',') if e.strip()]
     receiver_email = ", ".join(recipient_list)
     
+    cc_email_env = os.environ.get('EMAIL_CC', '')  # optional CC
     cc_email = ""
     if cc_email_env:
         cc_list = [e.strip() for e in cc_email_env.split(',') if e.strip()]
@@ -476,7 +477,9 @@ def send_email():
     # Send email
     try:
         server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
+        server.ehlo()               # Identify to server
+        server.starttls() # Upgrade to secure TLS
+        server.ehlo()               # Re-identify after TLS
         server.login(smtp_username, smtp_password)
         server.send_message(msg)
         server.quit()
