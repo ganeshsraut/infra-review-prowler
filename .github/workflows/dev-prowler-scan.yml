@@ -1,6 +1,8 @@
+name: Prowler AWS Scan
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '46 18 * * *' # Runs Daily at 12:00 AM IST (18:30 UTC)
+    - cron: '30 18 * * *' # Runs Daily at 12:00 AM IST 
 
 permissions:
   id-token: write
@@ -10,46 +12,62 @@ jobs:
   prowler-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+    # 1. Checkout repo
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Install Prowler
-        run: pip install -r prowler-scan/requirements.txt
+    # 2. Set up Python
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ProwlerScanRole
-          aws-region: us-south-1
+    # 3. Set up AWS credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1  
 
-      - name: Run Prowler Scan
-        run: |
-          mkdir -p output
-          
-          prowler aws \
-            --config-file ./prowler-scan/config/config.yaml \
-            --checks-file ./prowler-scan/config/checklist.yaml \
-            --output-directory output \
-            --output-modes html json-ocsf \
-            --output-filename prowler-report \
-            --ignore-exit-code-3
+    # 4. Install Prowler
+    - name: Install Prowler
+      run: pip install -r prowler-scan/requirements.txt
 
-      - name: Send Report via Email
-        env:
-          AWS_REGION: us-west-2
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
-          EMAIL_TO: ${{ vars.EMAIL_TO }}
-          EMAIL_CC: ${{ vars.EMAIL_CC }}
-          S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
-          REPORT_DIR: output
-        run: python prowler-scan/scripts/send_report.py
+    - name: Verify Installation
+      run: prowler --version  
 
+    # 5. Run Prowler
+    - name: Run Prowler Scan
+      run: |
+        mkdir -p output         
+        prowler aws \
+          --config-file ./prowler-scan/config/config.yaml \
+          --checks-file ./prowler-scan/config/checklist.yaml \
+          --output-directory output \
+          --output-modes html json-ocsf \
+          --output-filename prowler-report \
+          --ignore-exit-code-3 \
+          --region ap-south-1  
+
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: prowler-report
+        path: output/       
+
+    # Send Report
+    - name: Send Report via Email
+      env:
+        AWS_REGION: ap-south-1
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+        EMAIL_TO: ${{ vars.EMAIL_TO }}
+        EMAIL_CC: ${{ vars.EMAIL_CC }}
+        S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+        REPORT_DIR: output
+      run: python prowler-scan/scripts/send_report.py
