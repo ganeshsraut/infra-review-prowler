@@ -31,6 +31,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-south-1  
 
+    # Verify Access
+    - name: Verify AWS Access
+      run: aws sts get-caller-identity
+
     # 4. Install Prowler
     - name: Install Prowler
       run: pip install -r prowler-scan/requirements.txt
