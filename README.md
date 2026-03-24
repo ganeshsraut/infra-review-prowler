@@ -6,10 +6,6 @@ To ensure baseline security hygiene across AWS non-production environments by ru
 ## Repository Structure
 ```
 DevOps/
-├── .github/
-│   └── workflows/
-│       └── dev-prowler-scan.yml   # GitHub Actions Workflow
-│
 └── prowler-scan/
     ├── config/
     │   ├── config.yaml          # Prowler General Configuration
@@ -18,19 +14,19 @@ DevOps/
     ├── scripts/
     │   └── send_report.py       # Python script to email reports
     └── requirements.txt         # Python dependencies
+    ├── .env.example # Sample environment variables
 ```
 
-## Automation (GitHub Actions)
-The workflow **`dev-prowler-scan.yml`** is configured to run:
-
-1.  **On Schedule:** Daily at **12:00 AM IST** (18:30 UTC).
-2.  **On Push:** Whenever code is pushed to the `DevOps` branch.
+## Prerequisites
+Python 3.8+
+Virtual environment (venv)
+Gmail App Password (for email sending)
 
 ### Workflow Steps
 1.  **Checkout Code:** Pulls the latest code from the repository.
 2.  **Install Prowler:** Installs Prowler and dependencies from `requirements.txt`.
 3.  **Configure AWS Credentials:** Authenticates using OIDC (Role: `ProwlerScanRole`).
-4.  **Run Scan:** Executes Prowler against the **`us-west-2`** region.
+4.  **Run Scan:** Executes Prowler against the **`ap-south-1`** region.
     *   **Output:** Generates `HTML` and `JSON-OCSF` reports.
     *   **Config:** Uses `checklist.yaml` for checks and `aws_mutelist.yaml` for exceptions.
 5.  **Send Email:** Emails the reports to the team.
@@ -51,67 +47,51 @@ The `send_report.py` script sends an email with the scan results attached.
 
 ## Setup Requirements
 
-### GitHub Secrets
-| Secret Name | Description |
-|---|---|
-| `AWS_ACCOUNT_ID` | The AWS Account ID where the scan runs. |
-| `SMTP_SERVER` | SMTP Server address (e.g., `smtp.office365.com`). |
-| `SMTP_PORT` | SMTP Port (e.g., `587`). |
-| `SMTP_USERNAME` | Username for the email account. |
-| `SMTP_PASSWORD` | Password for the email account. |
+Copy the example file:
 
-### GitHub Variables
-| Variable Name | Description |
-|---|---|
-| `EMAIL_FROM` | The email address sending the report. |
-| `EMAIL_TO` | Comma-separated list of primary recipients. |
-| `EMAIL_CC` | Comma-separated list of CC recipients. |
-| `S3_BUCKET_NAME` | **(Required for comparison)** S3 bucket name to store reports (e.g., `prowler-reports-bucket`). |
-| `S3_REPORTS_PREFIX` | *(Optional)* S3 prefix/folder path (default: `prowler-reports`). |
+cp .env.example .env \
 
-### S3 Report Storage & Comparison
-The workflow now stores daily reports in S3 and compares today's scan with yesterday's to track security posture changes.
+Update .env with your values:
 
-**S3 Structure:**
-```
-s3://your-bucket/prowler-reports/
-  └── YYYY/
-      └── MM/
-          └── DD/
-              └── prowler-report.json
-```
+SMTP_SERVER=smtp.gmail.com \ 
+SMTP_PORT=587 \
+SMTP_USERNAME=your_email@gmail.com \
+SMTP_PASSWORD=your_app_password \
 
-**Email Comparison Format:**
-```
-Date: 5th Jan 2026
-Total Finding: 505
-Total Failed: 75
+EMAIL_FROM=your_email@gmail.com \
+EMAIL_TO=recipient@gmail.com \
 
-Date: 6th Jan 2026
-Total Finding: 500
-Total Failed: 76
-```
-
-**Setup Steps:**
-1. Create an S3 bucket (e.g., `prowler-reports-nonprod`)
-2. Ensure the IAM role (`ProwlerScanRole`) has permissions:
-   - `s3:PutObject` - Upload today's report
-   - `s3:GetObject` - Download yesterday's report
-   - `s3:ListBucket` - List reports (optional, for cleanup)
-3. Add `S3_BUCKET_NAME` to GitHub Variables
-4. (Optional) Add `S3_REPORTS_PREFIX` for custom folder structure
 
 ## Usage (Local)
 To run the scan locally (assuming you have AWS credentials configured):
 
+Copy the example file:
+
+cp .env.example .env
+
+Update .env with your values:
+
+SMTP_SERVER=smtp.gmail.com \
+SMTP_PORT=587 \
+SMTP_USERNAME=your_email@gmail.com \
+SMTP_PASSWORD=your_app_password \
+
+EMAIL_FROM=your_email@gmail.com \
+EMAIL_TO=recipient@gmail.com \
+
+REPORT_DIR=output
+
 ```bash
 prowler aws \
-  --config-file ./prowler-scan/config/config.yaml \
-  --checks-file ./prowler-scan/config/checklist.yaml \
+  --config-file ./config/config.yaml --checks-file ./config/checklist.yaml \
   --output-directory output \
   --output-modes html json-ocsf \
-  --region ap-south-1
+  --output-filename prowler-report \
+  --region ap-south-1  
 ```
 
 
-
+## Verify on local view report
+explorer.exe output/prowler-report.html \
+cd output/ \
+python3 -m http.server 8000
