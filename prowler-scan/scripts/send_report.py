@@ -148,14 +148,11 @@ def format_finding_html(finding):
 def send_email():
     # Get configuration from environment variables
     smtp_server = os.environ.get('SMTP_SERVER')
-    smtp_port = int(os.environ.get('SMTP_PORT', 587))
+    smtp_port = int(os.environ.get('SMTP_PORT') or 587)
     smtp_username = os.environ.get('SMTP_USERNAME')
     smtp_password = os.environ.get('SMTP_PASSWORD')
-    
     sender_email = os.environ.get('EMAIL_FROM')
     receiver_email_env = os.environ.get('EMAIL_TO')
-    cc_email_env = os.environ.get('EMAIL_CC')
-    
     report_dir = os.environ.get('REPORT_DIR', 'output')
     
     # S3 Configuration
