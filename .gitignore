@@ -1,6 +1,6 @@
 # Virtual environments
 prowler-scan/prowler-env/
-
+scripts/prowler-env/
 # Python cache
 __pycache__/
 *.pyc
